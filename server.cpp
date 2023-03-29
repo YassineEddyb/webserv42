@@ -1,15 +1,6 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <iostream>
-#include <string.h>
+#include "server.hpp"
 
-int main()
+int create_socket()
 {
   int ret;
   struct addrinfo hints;
@@ -21,22 +12,22 @@ int main()
   hints.ai_flags = AI_PASSIVE;
 
   std::cout << "Getting info address..." << std::endl;
-  if ((ret = getaddrinfo(0, "8080", &hints, &bind_address)))
+  if ((ret = getaddrinfo(0, PORT, &hints, &bind_address)))
   {
     std::cerr << gai_strerror(ret) << std::endl;
     return 1;
   }
 
   std::cout << "Creating a socket..." << std::endl;
-  int sockfd = socket(bind_address->ai_family, bind_address->ai_socktype, bind_address->ai_protocol);
-  if (sockfd == -1)
+  int server_socket = socket(bind_address->ai_family, bind_address->ai_socktype, bind_address->ai_protocol);
+  if (server_socket == -1)
   {
     std::cerr << strerror(errno) << std::endl;
     return 1;
   }
 
   std::cout << "Binding the socket with info address..." << std::endl;
-  if (bind(sockfd, bind_address->ai_addr, bind_address->ai_addrlen))
+  if (bind(server_socket, bind_address->ai_addr, bind_address->ai_addrlen))
   {
     std::cerr << strerror(errno) << std::endl;
     return 1;
@@ -44,51 +35,76 @@ int main()
   freeaddrinfo(bind_address);
 
   std::cout << "listening on the socket..." << std::endl;
-  if (listen(sockfd, 10))
+  if (listen(server_socket, SOCKET_LISTEN))
   {
     std::cerr << strerror(errno) << std::endl;
     return 1;
   }
+  return server_socket;
+}
 
-  std::cout << "waiting for connections..." << std::endl;
-  struct sockaddr sock_addr;
-  socklen_t sock_addr_len = sizeof(sock_addr);
+int main()
+{
+  int server_socket = create_socket();
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(server_socket, &fds);
+  int max_socket = SOCKET_LISTEN;
 
-  int client_socket = accept(sockfd, &sock_addr, &sock_addr_len);
-  if (client_socket == -1)
+  std::cout << "Waiting for connection" << std::endl;
+
+  while (true)
   {
-    std::cerr << strerror(errno) << std::endl;
-    return 1;
+    fd_set read_fds = fds;
+
+    if (select(max_socket + 1, &read_fds, NULL, NULL, 0) < 0)
+    {
+      std::cerr << strerror(errno) << std::endl;
+      return 1;
+    }
+
+    for (int i = 1; i <= max_socket; i++)
+    {
+      if (FD_ISSET(i, &read_fds))
+      {
+        if (i == server_socket)
+        {
+          struct sockaddr_storage client_addr;
+          socklen_t addr_len = sizeof(client_addr);
+          int socket_client = accept(server_socket, (struct sockaddr *)&client_addr, &addr_len);
+          if (socket_client < 0)
+          {
+            std::cerr << strerror(errno) << std::endl;
+            return 1;
+          }
+
+          std::cout << "client " << i << " connected." << std::endl;
+
+          FD_SET(socket_client, &fds);
+          if (socket_client > max_socket)
+            max_socket = socket_client;
+        }
+        else
+        {
+          char buff[1024];
+          int bytes_received = recv(i, buff, sizeof(buff), 0);
+          if (bytes_received < 1)
+          {
+            FD_CLR(i, &fds);
+            close(i);
+            continue;
+          }
+
+          std::cout << std::endl
+                    << buff << std::endl;
+
+          char res[1024] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n<h1> hello from the server </h1>";
+          send(i, res, strlen(res), 0);
+        }
+      }
+    }
   }
 
-  std::cout << "client is connected" << std::endl;
-  char addr_buff[100];
-  getnameinfo(&sock_addr, sock_addr_len, addr_buff, sizeof(addr_buff), 0, 0, NI_NUMERICHOST);
-  std::cout << "the address of the client is: " << addr_buff << std::endl;
-
-  std::cout << "reading request" << std::endl;
-  char req[1024];
-  int bytes_recv = recv(client_socket, req, sizeof(req), 0);
-  std::cout << "bytes recieved" << bytes_recv << "\n request is :\n"
-            << req << std::endl;
-
-  std::cout << "sending a response..." << std::endl;
-  const char *res =
-      "HTTP/1.1 200 OK\r\n"
-      "Connection: close\r\n"
-      "Content-Type: text/plain\r\n\r\n"
-      "Local time is: ";
-  int bytes_sent = send(client_socket, res, sizeof(res), 0);
-  std::cout << "sent " << bytes_sent << "of " << sizeof(res) << std::endl;
-
-  time_t timer;
-  time(&timer);
-  char *time_msg = ctime(&timer);
-  bytes_sent = send(client_socket, time_msg, strlen(time_msg), 0);
-  std::cout << "sent " << bytes_sent << " of " << sizeof(*time_msg) << std::endl;
-
-  std::cout << "closing connection" << std::endl;
-  close(client_socket);
-
+  close(server_socket);
   return 0;
 }
