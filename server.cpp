@@ -1,55 +1,94 @@
 #include "server.hpp"
 
-int create_socket()
+Server::Server()
 {
-  int ret;
-  struct addrinfo hints;
-  struct addrinfo *bind_address;
+  std::cout << "Server was Created" << std::endl;
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
+  max_socket = SOCKET_LISTEN;
+  FD_ZERO(&fds);
+}
+
+int Server::get_sokcet_fd()
+{
+  return sockfd;
+}
+
+void Server::get_address_info()
+{
+  int ret;
+
   std::cout << "Getting info address..." << std::endl;
   if ((ret = getaddrinfo(0, PORT, &hints, &bind_address)))
   {
     std::cerr << gai_strerror(ret) << std::endl;
-    return 1;
+    exit(1);
   }
-
-  std::cout << "Creating a socket..." << std::endl;
-  int server_socket = socket(bind_address->ai_family, bind_address->ai_socktype, bind_address->ai_protocol);
-  if (server_socket == -1)
-  {
-    std::cerr << strerror(errno) << std::endl;
-    return 1;
-  }
-
-  std::cout << "Binding the socket with info address..." << std::endl;
-  if (bind(server_socket, bind_address->ai_addr, bind_address->ai_addrlen))
-  {
-    std::cerr << strerror(errno) << std::endl;
-    return 1;
-  }
-  freeaddrinfo(bind_address);
-
-  std::cout << "listening on the socket..." << std::endl;
-  if (listen(server_socket, SOCKET_LISTEN))
-  {
-    std::cerr << strerror(errno) << std::endl;
-    return 1;
-  }
-  return server_socket;
 }
 
-int main()
+void Server::create_socket()
 {
-  int server_socket = create_socket();
-  fd_set fds;
-  FD_ZERO(&fds);
-  FD_SET(server_socket, &fds);
-  int max_socket = SOCKET_LISTEN;
+  std::cout << "Creating a Socket..." << std::endl;
+  sockfd = socket(bind_address->ai_family, bind_address->ai_socktype, bind_address->ai_protocol);
+  if (sockfd == -1)
+  {
+    std::cerr << strerror(errno) << std::endl;
+    exit(1);
+  }
+}
+
+void Server::bind_socket()
+{
+  std::cout << "Binding the socket with info address..." << std::endl;
+  if (bind(sockfd, bind_address->ai_addr, bind_address->ai_addrlen))
+  {
+    std::cerr << strerror(errno) << std::endl;
+    exit(1);
+  }
+  freeaddrinfo(bind_address);
+}
+
+void Server::listen_on_socket()
+{
+  std::cout << "listening on the socket..." << std::endl;
+  if (listen(sockfd, SOCKET_LISTEN))
+  {
+    std::cerr << strerror(errno) << std::endl;
+    exit(1);
+  }
+}
+
+void Server::create_server()
+{
+  get_address_info();
+  create_socket();
+  bind_socket();
+  listen_on_socket();
+}
+
+void Server::add_new_client()
+{
+  struct sockaddr_storage client_addr;
+  socklen_t addr_len = sizeof(client_addr);
+  int socket_client = accept(sockfd, (struct sockaddr *)&client_addr, &addr_len);
+  if (socket_client < 0)
+  {
+    std::cerr << strerror(errno) << std::endl;
+    exit(1);
+  }
+
+  FD_SET(socket_client, &fds);
+  if (socket_client > max_socket)
+    max_socket = socket_client;
+}
+
+void Server::multiplixing()
+{
+  FD_SET(sockfd, &fds);
 
   std::cout << "Waiting for connection" << std::endl;
 
@@ -60,33 +99,18 @@ int main()
     if (select(max_socket + 1, &read_fds, NULL, NULL, 0) < 0)
     {
       std::cerr << strerror(errno) << std::endl;
-      return 1;
+      exit(1);
     }
 
     for (int i = 1; i <= max_socket; i++)
     {
       if (FD_ISSET(i, &read_fds))
       {
-        if (i == server_socket)
-        {
-          struct sockaddr_storage client_addr;
-          socklen_t addr_len = sizeof(client_addr);
-          int socket_client = accept(server_socket, (struct sockaddr *)&client_addr, &addr_len);
-          if (socket_client < 0)
-          {
-            std::cerr << strerror(errno) << std::endl;
-            return 1;
-          }
-
-          std::cout << "client " << i << " connected." << std::endl;
-
-          FD_SET(socket_client, &fds);
-          if (socket_client > max_socket)
-            max_socket = socket_client;
-        }
+        if (i == sockfd)
+          add_new_client();
         else
         {
-          char buff[1024];
+          char buff[1024] = {0};
           int bytes_received = recv(i, buff, sizeof(buff), 0);
           if (bytes_received < 1)
           {
@@ -95,8 +119,8 @@ int main()
             continue;
           }
 
-          std::cout << std::endl
-                    << buff << std::endl;
+          std::string req(buff);
+          std::map<std::string, std::string> map = handle_request(req);
 
           char res[1024] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n<h1> hello from the server </h1>";
           send(i, res, strlen(res), 0);
@@ -104,7 +128,9 @@ int main()
       }
     }
   }
+}
 
-  close(server_socket);
-  return 0;
+Server::~Server()
+{
+  std::cout << "Destructor Called" << std::endl;
 }

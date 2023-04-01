@@ -1,5 +1,5 @@
-SRC = server.cpp
-CFLAGS = #-Wall -Wextra -Werror -fsanitize=address
+SRC = main.cpp server.cpp ./parsing/parse_post.cpp
+CFLAGS =  -fsanitize=address #-std=c++98
 CPP = c++
 NAME = server
 CLIENT = client

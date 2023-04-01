@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <string>
-#include <unordered_map>
+#include <map>
+
+std::map<std::string, std::string> handle_request(const std::string &request);
 
 #endif
