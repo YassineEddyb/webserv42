@@ -1,4 +1,4 @@
-SRC = main.cpp server.cpp ./parsing/parse_post.cpp
+SRC = main.cpp server.cpp client.cpp ./parsing/parse_post.cpp
 CFLAGS =  -fsanitize=address #-std=c++98
 CPP = c++
 NAME = server

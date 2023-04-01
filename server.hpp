@@ -1,20 +1,10 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <iostream>
-#include <string.h>
+#include "main.hpp"
 #include "./parsing/parsing.hpp"
+#include "client.hpp"
 
-#define PORT "8080"
-#define SOCKET_LISTEN 10
 
 class Server
 {
@@ -24,6 +14,7 @@ private:
   struct addrinfo *bind_address;
   int max_socket;
   fd_set fds;
+  std::vector<Client> clients;
 
 public:
   Server();
