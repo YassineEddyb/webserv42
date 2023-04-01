@@ -73,16 +73,44 @@ void Server::create_server()
 void Server::add_new_client()
 {
   Client c;
-  int c.socket = accept(sockfd, (struct sockaddr *)&c.address, &c.address_length);
-  if (c.socket < 0)
+  struct sockaddr_storage addr;
+  socklen_t addr_len = sizeof(addr);
+
+  int client_socket = accept(sockfd, (struct sockaddr *)&addr, &addr_len);
+  if (client_socket < 0)
   {
     std::cerr << strerror(errno) << std::endl;
     exit(1);
   }
 
-  FD_SET(c.socket, &fds);
-  if (c.socket > max_socket)
-    max_socket = c.socket;
+  FD_SET(client_socket, &fds);
+  if (client_socket > max_socket)
+    max_socket = client_socket;
+
+  c.set_socket_fd(client_socket);
+  c.set_address(addr);
+  clients.push_back(c);
+}
+
+void Server::handle_request(int fd)
+{
+  char buff[1024] = {0};
+  int bytes_received = recv(fd, buff, sizeof(buff), 0);
+  if (bytes_received < 1)
+  {
+    FD_CLR(fd, &fds);
+    close(fd);
+  }
+  else
+  {
+    std::string req(buff);
+    // std::map<std::string, std::string> map = handle_request(req);
+
+    // print_map(map);
+
+    char res[1024] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n<h1> hello from the server </h1>";
+    send(fd, res, strlen(res), 0);
+  }
 }
 
 void Server::multiplixing()
@@ -108,24 +136,6 @@ void Server::multiplixing()
         if (i == sockfd)
           add_new_client();
         else
-        {
-          char buff[1024] = {0};
-          int bytes_received = recv(i, buff, sizeof(buff), 0);
-          if (bytes_received < 1)
-          {
-            FD_CLR(i, &fds);
-            close(i);
-            continue;
-          }
-
-          std::string req(buff);
-          std::map<std::string, std::string> map = handle_request(req);
-          
-          print_map(map);
-
-          char res[1024] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n<h1> hello from the server </h1>";
-          send(i, res, strlen(res), 0);
-        }
       }
     }
   }

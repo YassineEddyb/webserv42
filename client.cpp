@@ -1,10 +1,22 @@
 #include "client.hpp"
 
-Client::Client() {
+Client::Client()
+{
     std::cout << "Client was Created" << std::endl;
-    address_length = sizeof(address);
+    addr_len = sizeof(addr);
 }
 
-Client::~Client() {
+void Client::set_socket_fd(int fd)
+{
+    socket_fd = fd;
+}
+
+void Client::set_address(struct sockaddr_storage &address)
+{
+    addr = address;
+}
+
+Client::~Client()
+{
     std::cout << "Client was Destroyed" << std::endl;
 }

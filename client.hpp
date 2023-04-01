@@ -6,16 +6,17 @@
 class Client
 {
 private:
-  struct sockaddr_storage address;
-  socklen_t address_length;
-  int socket;
+  struct sockaddr_storage addr;
+  socklen_t addr_len;
+  int socket_fd;
   char request[MAX_REQUEST_SIZE + 1];
   int received;
 
 public:
   Client();
 
-  void set_socket();
+  void set_socket_fd(int fd);
+  void set_address(struct sockaddr_storage &address);
 
   ~Client();
 };

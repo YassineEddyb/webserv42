@@ -5,7 +5,6 @@
 #include "./parsing/parsing.hpp"
 #include "client.hpp"
 
-
 class Server
 {
 private:
@@ -27,6 +26,7 @@ public:
   void listen_on_socket();
   void create_server();
   void add_new_client();
+  void handle_request(int fd);
   void multiplixing();
 
   ~Server();
