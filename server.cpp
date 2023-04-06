@@ -105,7 +105,6 @@ void Server::handle_request(int fd)
   {
     std::string req(buff);
     // std::map<std::string, std::string> map = handle_request(req);
-
     // print_map(map);
 
     char res[1024] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n<h1> hello from the server </h1>";
@@ -113,7 +112,7 @@ void Server::handle_request(int fd)
   }
 }
 
-void Server::multiplixing()
+void Server::start()
 {
   FD_SET(sockfd, &fds);
 
@@ -136,6 +135,7 @@ void Server::multiplixing()
         if (i == sockfd)
           add_new_client();
         else
+          handle_request(i);
       }
     }
   }

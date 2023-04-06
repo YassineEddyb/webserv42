@@ -27,7 +27,7 @@ public:
   void create_server();
   void add_new_client();
   void handle_request(int fd);
-  void multiplixing();
+  void start();
 
   ~Server();
 };

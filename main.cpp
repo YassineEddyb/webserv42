@@ -11,7 +11,7 @@ int main()
 {
   Server srv;
   srv.create_server();
-  srv.multiplixing();
+  srv.start();
 
   return 0;
 }
