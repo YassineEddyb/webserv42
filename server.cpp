@@ -32,11 +32,17 @@ void Server::get_address_info()
 
 void Server::create_socket()
 {
+  const int enable = 1;
   std::cout << "Creating a Socket..." << std::endl;
   sockfd = socket(bind_address->ai_family, bind_address->ai_socktype, bind_address->ai_protocol);
   if (sockfd == -1)
   {
-    std::cerr << strerror(errno) << std::endl;
+    std::cerr << "socket: " << strerror(errno) << std::endl;
+    exit(1);
+  }
+  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+  {
+    std::cerr << "setsockopt: " << strerror(errno) << std::endl;
     exit(1);
   }
 }
@@ -46,7 +52,7 @@ void Server::bind_socket()
   std::cout << "Binding the socket with info address..." << std::endl;
   if (bind(sockfd, bind_address->ai_addr, bind_address->ai_addrlen))
   {
-    std::cerr << strerror(errno) << std::endl;
+    std::cerr << "bind: " << strerror(errno) << std::endl;
     exit(1);
   }
   freeaddrinfo(bind_address);
@@ -57,7 +63,7 @@ void Server::listen_on_socket()
   std::cout << "listening on the socket..." << std::endl;
   if (listen(sockfd, SOCKET_LISTEN))
   {
-    std::cerr << strerror(errno) << std::endl;
+    std::cerr << "listen: " << strerror(errno) << std::endl;
     exit(1);
   }
 }
@@ -79,7 +85,7 @@ void Server::add_new_client()
   int client_socket = accept(sockfd, (struct sockaddr *)&addr, &addr_len);
   if (client_socket < 0)
   {
-    std::cerr << strerror(errno) << std::endl;
+    std::cerr << "accept: " << strerror(errno) << std::endl;
     exit(1);
   }
 
@@ -124,7 +130,7 @@ void Server::start()
 
     if (select(max_socket + 1, &read_fds, NULL, NULL, 0) < 0)
     {
-      std::cerr << strerror(errno) << std::endl;
+      std::cerr << "select: " << strerror(errno) << std::endl;
       exit(1);
     }
 
