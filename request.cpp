@@ -1,14 +1,6 @@
 #include "request.hpp"
 
-Request::Request(std::string req)
-{
-  int pos = req.find(SEP);
-  std::string header = req.substr(0, pos);
-  std::string body = req.substr(pos + 4);
-
-  parse_headers(header);
-  parse_body(body);
-}
+Request::Request() {}
 
 void Request::parse_request_line(std::string req_line)
 {

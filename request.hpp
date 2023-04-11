@@ -18,7 +18,7 @@ private:
   std::map<std::string, std::string> headers;
 
 public:
-  Request(std::string req);
+  Request();
 
   void parse_headers(std::string header);
   void parse_request_line(std::string req_line);

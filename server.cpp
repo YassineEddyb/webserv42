@@ -94,14 +94,37 @@ void Server::add_new_client()
     max_socket = client_socket;
 
   c.set_socket_fd(client_socket);
-  c.set_address(addr);
+  -c.set_address(addr);
   clients.push_back(c);
+}
+
+Client &Server::get_client_with_fd(int fd)
+{
+  std::vector<Client>::iterator start = clients.begin();
+
+  while (start < clients.end())
+  {
+    if ((*start).get_socket_fd() == fd)
+    {
+      return (*start);
+      std::cout << "found client width fd: " << fd << std::endl;
+    }
+    start++;
+  }
 }
 
 void Server::handle_request(int fd)
 {
+  Client &c = get_client_with_fd(fd); // need a copy constructor
   char buff[BUFFER_SIZE] = {0};
+
   int bytes_received = recv(fd, buff, sizeof(buff), 0);
+  // int pos = req.find(SEP);
+  // std::string header = req.substr(0, pos);
+  // std::string body = req.substr(pos + 4);
+
+  // parse_headers(header);
+  // parse_body(body);
   if (bytes_received < 1)
   {
     FD_CLR(fd, &fds);
@@ -109,8 +132,8 @@ void Server::handle_request(int fd)
   }
   else
   {
-    std::string str(buff);
-    Request req(str);
+    // std::string str(buff);
+    // Request req(str);
     // std::map<std::string, std::string> map = handle_request(req);
     // print_map(map);
 
@@ -122,7 +145,6 @@ void Server::handle_request(int fd)
 void Server::start()
 {
   FD_SET(sockfd, &fds);
-
   std::cout << "Waiting for connection" << std::endl;
 
   while (true)

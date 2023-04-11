@@ -27,6 +27,7 @@ public:
   void listen_on_socket();
   void create_server();
   void add_new_client();
+  Client &get_client_with_fd(int fd);
   void handle_request(int fd);
   void start();
 
