@@ -100,7 +100,7 @@ void Server::add_new_client()
 
 void Server::handle_request(int fd)
 {
-  char buff[1024] = {0};
+  char buff[BUFFER_SIZE] = {0};
   int bytes_received = recv(fd, buff, sizeof(buff), 0);
   if (bytes_received < 1)
   {
@@ -109,7 +109,8 @@ void Server::handle_request(int fd)
   }
   else
   {
-    std::string req(buff);
+    std::string str(buff);
+    Request req(str);
     // std::map<std::string, std::string> map = handle_request(req);
     // print_map(map);
 
