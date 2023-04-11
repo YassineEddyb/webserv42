@@ -11,7 +11,7 @@ private:
   int socket_fd;
   char request[MAX_REQUEST_SIZE + 1];
   int received;
-  Request req;
+  // Request req;
 
 public:
   Client();
