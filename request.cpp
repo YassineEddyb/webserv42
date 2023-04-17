@@ -9,6 +9,7 @@ void Request::parse_request_line(std::string req_line)
 
   int new_pos = req_line.find(SPACE, pos + 1);
   location = req_line.substr(pos + 1, new_pos - pos - 1);
+
 }
 
 void Request::parse_headers(std::string header)

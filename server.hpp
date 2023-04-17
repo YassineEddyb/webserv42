@@ -14,7 +14,7 @@ private:
   struct addrinfo *bind_address;
   int max_socket;
   fd_set fds;
-  std::vector<Client> clients;
+  std::vector<Client *> clients;
 
 public:
   Server();
@@ -27,7 +27,7 @@ public:
   void listen_on_socket();
   void create_server();
   void add_new_client();
-  Client &get_client_with_fd(int fd);
+  Client *get_client_with_fd(int fd);
   void handle_request(int fd);
   void start();
 

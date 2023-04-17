@@ -2,6 +2,7 @@
 #define CLIENT_HPP
 
 #include "main.hpp"
+#include "request.hpp"
 
 class Client
 {
@@ -11,6 +12,7 @@ private:
   int socket_fd;
   int received;
   Request req;
+  bool is_header;
 
 public:
   Client();
@@ -19,6 +21,7 @@ public:
   void set_address(struct sockaddr_storage &address);
   int get_socket_fd();
   void set_received(int rec);
+  void parse_request(std::string req);
 
   ~Client();
 };

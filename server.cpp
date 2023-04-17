@@ -78,7 +78,7 @@ void Server::create_server()
 
 void Server::add_new_client()
 {
-  Client c;
+  Client *c = new Client();
   struct sockaddr_storage addr;
   socklen_t addr_len = sizeof(addr);
 
@@ -93,38 +93,34 @@ void Server::add_new_client()
   if (client_socket > max_socket)
     max_socket = client_socket;
 
-  c.set_socket_fd(client_socket);
-  -c.set_address(addr);
+  c->set_socket_fd(client_socket);
+  c->set_address(addr);
   clients.push_back(c);
 }
 
-Client &Server::get_client_with_fd(int fd)
+Client *Server::get_client_with_fd(int fd)
 {
-  std::vector<Client>::iterator start = clients.begin();
+  std::vector<Client *>::iterator start = clients.begin();
 
   while (start < clients.end())
   {
-    if ((*start).get_socket_fd() == fd)
+    if ((*start)->get_socket_fd() == fd)
     {
       return (*start);
       std::cout << "found client width fd: " << fd << std::endl;
     }
     start++;
   }
+  return NULL;
 }
 
 void Server::handle_request(int fd)
 {
-  Client &c = get_client_with_fd(fd); // need a copy constructor
+  Client *c = get_client_with_fd(fd); // need a copy constructor
+
   char buff[BUFFER_SIZE] = {0};
-
   int bytes_received = recv(fd, buff, sizeof(buff), 0);
-  // int pos = req.find(SEP);
-  // std::string header = req.substr(0, pos);
-  // std::string body = req.substr(pos + 4);
 
-  // parse_headers(header);
-  // parse_body(body);
   if (bytes_received < 1)
   {
     FD_CLR(fd, &fds);
@@ -132,13 +128,10 @@ void Server::handle_request(int fd)
   }
   else
   {
-    // std::string str(buff);
-    // Request req(str);
-    // std::map<std::string, std::string> map = handle_request(req);
-    // print_map(map);
+    c->parse_request(buff);
 
     char res[1024] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n<h1> hello from the server </h1>";
-    send(fd, res, strlen(res), 0);
+    send(c->get_socket_fd(), res, strlen(res), 0);
   }
 }
 
@@ -169,6 +162,7 @@ void Server::start()
     }
   }
 }
+
 
 Server::~Server()
 {
