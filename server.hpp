@@ -20,7 +20,6 @@ public:
   Server();
 
   int get_sokcet_fd();
-
   void get_address_info();
   void create_socket();
   void bind_socket();

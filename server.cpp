@@ -118,7 +118,7 @@ void Server::handle_request(int fd)
 {
   Client *c = get_client_with_fd(fd); // need a copy constructor
 
-  char buff[BUFFER_SIZE] = {0};
+  char buff[BUFFER_SIZE];
   int bytes_received = recv(fd, buff, sizeof(buff), 0);
 
   if (bytes_received < 1)
@@ -128,10 +128,13 @@ void Server::handle_request(int fd)
   }
   else
   {
-    c->parse_request(buff);
+    c->parse_request(buff, bytes_received);
 
-    char res[1024] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n<h1> hello from the server </h1>";
-    send(c->get_socket_fd(), res, strlen(res), 0);
+    // std::cout << buff << std::endl;
+
+    // char res[1024] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n<h1> hello from the server </h1>";
+    // send(c->get_socket_fd(), res, strlen(res), 0);
+
   }
 }
 
@@ -139,12 +142,14 @@ void Server::start()
 {
   FD_SET(sockfd, &fds);
   std::cout << "Waiting for connection" << std::endl;
+  std::cout << "server listening on port: " << PORT << std::endl;
 
   while (true)
   {
     fd_set read_fds = fds;
+    fd_set write_fds = fds;
 
-    if (select(max_socket + 1, &read_fds, NULL, NULL, 0) < 0)
+    if (select(max_socket + 1, &read_fds, &write_fds, NULL, 0) < 0)
     {
       std::cerr << "select: " << strerror(errno) << std::endl;
       exit(1);
@@ -159,6 +164,7 @@ void Server::start()
         else
           handle_request(i);
       }
+      // else if (FD_ISSET(i, &write_fds))
     }
   }
 }

@@ -21,7 +21,7 @@ public:
   void set_address(struct sockaddr_storage &address);
   int get_socket_fd();
   void set_received(int rec);
-  void parse_request(std::string req);
+  void parse_request(const char* req_body, size_t length);
 
   ~Client();
 };

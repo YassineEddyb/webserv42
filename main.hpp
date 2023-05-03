@@ -13,11 +13,12 @@
 #include <string.h>
 #include <map>
 #include <vector>
+#include <fstream>
 
-#define PORT "8080"
+#define PORT "8011"
 #define SOCKET_LISTEN 10
-#define MAX_REQUEST_SIZE 1024
-#define BUFFER_SIZE 2048
+// #define MAX_REQUEST_SIZE 1024
+#define BUFFER_SIZE 4096
 
 void print_map(std::map<std::string, std::string> map);
 

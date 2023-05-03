@@ -1,14 +1,15 @@
-<form action="http://localhost:8080" method="POST">
-  <div>
-    <label for="say">What greeting do you want to say?</label>
-    <input name="say" id="say" value="Hi" />
-  </div>
-  <div>
-    <label for="to">Who do you want to say it to?</label>
-    <input name="to" id="to" value="Mom" />
-  </div>
-  <div></div>
-  <div>
-    <button type="submit">Send my greetings</button>
-  </div>
+<form
+  action="http://localhost:8011"
+  method="post"
+  enctype="multipart/form-data"
+>
+  <!-- upload of a single file -->
+  <p>
+    <label>Add file (single): </label><br />
+    <input type="file" name="example1" />
+  </p>
+
+  <p>
+    <input type="submit" />
+  </p>
 </form>
